@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroClean - Ceiling Cleaning Robot Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="top-bar glass-panel">
+            <div class="logo">
+                <i class="fa-solid fa-robot"></i>
+                <h1>AeroClean</h1>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <span class="indicator-dot" id="conn-dot"></span>
+                    <span id="conn-text">Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span id="mode-text">Manual Mode</span>
+                </div>
+                <div class="status-item battery">
+                    <i class="fa-solid fa-battery-three-quarters"></i>
+                    <span id="battery-level">75%</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-grid">
+            
+            <!-- Left Column: Camera Feed -->
+            <section class="camera-section glass-panel">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-video"></i> Live Camera Feed</h2>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                <div class="video-container">
+                    <!-- Replace with actual ESP32-CAM stream URL later -->
+                    <img id="camera-stream" src="https://via.placeholder.com/640x480.png?text=Waiting+for+Video+Stream..." alt="ESP32-CAM Stream">
+                    <div class="crosshair"></div>
+                </div>
+                <div class="camera-controls">
+                    <div class="input-group">
+                        <label for="cam-ip">Robot IP (ESP32-CAM):</label>
+                        <input type="text" id="cam-ip" placeholder="e.g. 192.168.1.100" value="192.168.1.100">
+                    </div>
+                    <div class="input-group" style="display: none;">
+                        <label for="robot-ip">Robot IP:</label>
+                        <input type="text" id="robot-ip" placeholder="e.g. 192.168.1.101" value="192.168.1.101">
+                    </div>
+                    <button id="connect-btn" class="btn primary-btn" style="margin-top: 15px; width: 100%;">Connect</button>
+                </div>
+            </section>
+
+            <!-- Middle Column: Movement & Modes -->
+            <div class="center-column">
+                <section class="mode-section glass-panel">
+                    <h2><i class="fa-solid fa-gear"></i> Operation Mode</h2>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="mode-toggle" class="toggle-checkbox">
+                        <label for="mode-toggle" class="toggle-label">
+                            <span class="toggle-inner"></span>
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+                    <p class="mode-desc" id="mode-desc">User controls movement.</p>
+                </section>
+
+                <section class="movement-section glass-panel">
+                    <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Movement Control</h2>
+                    <div class="d-pad">
+                        <button class="d-btn up" onmousedown="sendCommand('F')" onmouseup="sendCommand('S')" ontouchstart="sendCommand('F')" ontouchend="sendCommand('S')"><i class="fa-solid fa-arrow-up"></i></button>
+                        <button class="d-btn left" onmousedown="sendCommand('L')" onmouseup="sendCommand('S')" ontouchstart="sendCommand('L')" ontouchend="sendCommand('S')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <button class="d-btn stop" onclick="sendCommand('S')"><i class="fa-solid fa-stop"></i></button>
+                        <button class="d-btn right" onmousedown="sendCommand('R')" onmouseup="sendCommand('S')" ontouchstart="sendCommand('R')" ontouchend="sendCommand('S')"><i class="fa-solid fa-arrow-right"></i></button>
+                        <button class="d-btn down" onmousedown="sendCommand('B')" onmouseup="sendCommand('S')" ontouchstart="sendCommand('B')" ontouchend="sendCommand('S')"><i class="fa-solid fa-arrow-down"></i></button>
+                    </div>
+                </section>
+                
+                <section class="cleaning-section glass-panel">
+                    <h2><i class="fa-solid fa-broom"></i> Cleaning Unit</h2>
+                    <div class="action-buttons">
+                        <button class="btn action-btn brush-btn" onclick="toggleBrush()"><i class="fa-solid fa-fan"></i> Toggle Brush</button>
+                        <button class="btn action-btn vacuum-btn" onclick="toggleVacuum()"><i class="fa-solid fa-wind"></i> Toggle Vacuum</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Arm Controls & Sensors -->
+            <div class="right-column">
+                <section class="sensor-section glass-panel">
+                    <h2><i class="fa-solid fa-satellite-dish"></i> Sensor Data</h2>
+                    <div class="sensor-grid">
+                        <div class="sensor-card">
+                            <i class="fa-solid fa-ruler-horizontal"></i>
+                            <div class="sensor-info">
+                                <h3>Ultrasonic</h3>
+                                <p id="dist-val">-- cm</p>
+                            </div>
+                        </div>
+                        <div class="sensor-card">
+                            <i class="fa-solid fa-wave-square"></i>
+                            <div class="sensor-info">
+                                <h3>IR Edge</h3>
+                                <p id="ir-val">Safe</p>
+                            </div>
+                        </div>
+                        <div class="sensor-card">
+                            <i class="fa-solid fa-toggle-on"></i>
+                            <div class="sensor-info">
+                                <h3>Limit Switch</h3>
+                                <p id="limit-val">Open</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="arm-section glass-panel">
+                    <h2><i class="fa-solid fa-robot"></i> Robotic Arm Control</h2>
+                    <div class="slider-group">
+                        <label for="base-slider">Base (Rotate)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="base-slider" min="0" max="180" value="90" oninput="updateArm('base', this.value)">
+                            <span id="base-val" class="slider-val">90&deg;</span>
+                        </div>
+                    </div>
+                    <div class="slider-group">
+                        <label for="shoulder-slider">Shoulder (Up/Down)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="shoulder-slider" min="0" max="180" value="90" oninput="updateArm('shoulder', this.value)">
+                            <span id="shoulder-val" class="slider-val">90&deg;</span>
+                        </div>
+                    </div>
+                    <div class="slider-group">
+                        <label for="elbow-slider">Elbow (Extend)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="elbow-slider" min="0" max="180" value="90" oninput="updateArm('elbow', this.value)">
+                            <span id="elbow-val" class="slider-val">90&deg;</span>
+                        </div>
+                    </div>
+                    <div class="slider-group">
+                        <label for="head-slider">Head (Direction)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="head-slider" min="0" max="180" value="90" oninput="updateArm('head', this.value)">
+                            <span id="head-val" class="slider-val">90&deg;</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
